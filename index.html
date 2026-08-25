@@ -86,6 +86,12 @@ h1{margin:3px 0 0;font-size:26px;font-weight:800;letter-spacing:-.02em;text-tran
 .dayutil span[data-du]{cursor:pointer;padding:8px 6px;text-decoration:underline;text-underline-offset:3px;}
 .dayutil span[data-du].warn{color:var(--red);font-weight:700;text-decoration:none;}
 .du-dot{padding:0 4px;}
+/* ---- exercise library ---- */
+.lib-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+.lib-row:last-child{border-bottom:none;}
+.lib-main{flex:1;min-width:0;}
+.lib-name{font-size:14.5px;font-weight:700;color:var(--chalk);}
+.lib-desc{font-size:12px;color:var(--dim);line-height:1.45;margin-top:2px;}
 .tabrow{display:flex;gap:2px;margin:8px 2px 0;border-bottom:1px solid var(--line);}
 .tab{flex:1;text-align:center;padding:8px 0 9px;font-size:11px;font-weight:800;letter-spacing:.1em;
   text-transform:uppercase;color:var(--faint);cursor:pointer;position:relative;}
@@ -1107,8 +1113,7 @@ td.c-n.now{font-weight:700;}
 #app.is-preview .prevbar,
 #app.is-preview .tabrow,
 #app.is-preview .chiprow,
-#app.is-preview .weekrow,
-#app.is-preview .lockfree{pointer-events:auto;opacity:1;}
+#app.is-preview .weekrow{pointer-events:auto;opacity:1;}
 
 /* ---- photo, full size ---- */
 .avabig-wrap{position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.88);display:flex;
@@ -2516,6 +2521,19 @@ function lockGuard(ev){
     if(!dayLocked() && !pv) return;
     var t=ev.target;
     if(!t || !t.closest) return;
+    if(pv && !dayLocked()){
+      // FUTURE PREVIEW: total lockdown. Only navigation off the page, the preview bar, and
+      // overlays floating above the session (walkthrough, what's-new, report, enlarged photo)
+      // stay live. The day-agnostic .lockfree utilities - cardio and bodyweight - edit TODAY's
+      // data and stay live on a logged-day review, but a preview is browsing, not training.
+      if(t.closest('.prevbar') || t.closest('.tabrow') || t.closest('.chiprow')
+         || t.closest('.weekrow') || t.closest('#coachHost') || t.closest('.wn-wrap')
+         || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('.avabig-wrap')) return;
+      ev.stopPropagation();
+      if(ev.cancelable) ev.preventDefault();
+      if(ev.type==='click') alertToast('Locked \u2014 this session opens when it becomes your active day');
+      return;
+    }
     if(t.closest('[data-unlock]') || t.closest('.tabrow') || t.closest('.chiprow')
        || t.closest('.weekrow') || t.closest('#coachHost') || t.closest('.wn-wrap')
        || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('#gbHost')
@@ -3101,6 +3119,14 @@ function avaBigWire(){
     el.onclick=function(){ avaBigClose(); };
   });
 }
+// A transient viewer must not outlive the visit: the moment the app is backgrounded or the
+// page is being torn down, the enlarged photo closes. The OS takes its resume snapshot AFTER
+// these fire, so both the snapshot and the returning screen show the card itself - never a
+// full-screen photo sitting over a waking app, which reads as a frozen card.
+try{
+  document.addEventListener('visibilitychange', function(){ if(document.hidden && AVABIG) avaBigClose(); });
+  window.addEventListener('pagehide', function(){ if(AVABIG) avaBigClose(); });
+}catch(e){}
 
 // ===== ADAPTATION =====
 // Three things the card previously noticed but never acted on. Each one is a rule with a stated
@@ -3730,6 +3756,52 @@ function howBtnHTML(name){
   // every movement can teach itself now: clip, curated video, or at worst a precise search
   return '<span class="hw-btn" data-how="'+esc(name)+'">How</span>';
 }
+// ===== EXERCISE LIBRARY =====
+// Every movement the card knows, on its own tab - the same How sheet the session uses,
+// reachable without hunting for the exercise inside a training day. The search filters
+// in place (no re-render) so the keyboard never loses focus mid-word.
+var libQ='';
+function libraryHTML(){
+  var groups={}, order=[];
+  try{ EXLIB.forEach(function(r){ var g=String(r[1]||'other');
+    if(!groups[g]){ groups[g]=[]; order.push(g); } groups[g].push(r); }); }catch(e){}
+  var GLBL={push:'Push', pull:'Pull', legs:'Legs', arms:'Arms', shoulders:'Shoulders', core:'Core', carry:'Carries', other:'Other'};
+  var h='<div class="sub" style="margin-top:8px">Exercise library</div>'
+   +'<div class="block">'
+   +'<input type="search" id="libSearch" class="dtin" placeholder="Search an exercise\u2026" value="'+esc(libQ)+'"'
+   +' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="margin-top:0">'
+   +'<div id="libEmpty" class="cue" style="display:none;padding:10px 0 0">Nothing matches \u2014 try fewer letters.</div>';
+  order.forEach(function(g){
+    h+='<div data-libgroup="1"><h3 style="margin-top:14px">'+esc(GLBL[g]||g)+'</h3>';
+    (groups[g]||[]).forEach(function(r){
+      var name=r[0], desc=r[7]||'';
+      h+='<div class="lib-row" data-librow="'+esc((String(name)+' '+String(desc)+' '+String(r[2]||'')+' '+String(g)).toLowerCase())+'">'
+        +'<div class="lib-main"><div class="lib-name">'+esc(name)+'</div>'
+        +(desc?'<div class="lib-desc">'+esc(desc)+'</div>':'')+'</div>'
+        +howBtnHTML(name)+'</div>';
+    });
+    h+='</div>';
+  });
+  h+='<div class="rules">Every How opens the same sheet you see inside a session \u2014 a filmed clip or curated video first, a precise search as the fallback.</div>';
+  h+='</div>';
+  return h;
+}
+function libFilter(){
+  try{
+    var q=String(libQ||'').trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var any=false;
+    document.querySelectorAll('[data-librow]').forEach(function(row){
+      var hay=row.getAttribute('data-librow')||'';
+      var hit=q.every(function(w){ return hay.indexOf(w)>-1; });
+      row.style.display=hit?'':'none'; if(hit) any=true;
+    });
+    document.querySelectorAll('[data-libgroup]').forEach(function(gr){
+      var vis=false; gr.querySelectorAll('[data-librow]').forEach(function(r){ if(r.style.display!=='none') vis=true; });
+      gr.style.display=vis?'':'none';
+    });
+    var em=document.getElementById('libEmpty'); if(em) em.style.display=any?'none':'';
+  }catch(e){}
+}
 function howSheetHTML(){
   if(!howEx) return '';
   var name=howEx, file=CLIPS[exSlug(name)];
@@ -3749,7 +3821,7 @@ function howSheetHTML(){
   // the athlete's own prescription for this movement today - the part a generic demo can't give
   var rx='';
   try{
-    var list=effectiveExercises(S.day)||[];
+    var list=(PLAN.days.some(function(dd){ return dd.code===S.day; })? (effectiveExercises(S.day)||[]) : []);   // browsing the Library, there is no "today" prescription to show
     for(var i=0;i<list.length;i++){
       var ex=list[i];
       var st=(S.data&&S.data[cyc()+'c|'+S.week+'|'+S.day+'|'+i])||{};
@@ -6279,7 +6351,7 @@ function renderInner(){
     return '<div class="chip'+(x.code===S.day?' on':'')+(x.code===__td?' today':'')+'" data-day="'+x.code+'">'
       +x.code+(done?'<span style="color:var(--green);font-weight:800">\u2713</span>':'')
       +(wd?'<span class="chipwd">'+wd+'</span>':'')+'</div>'; }).join('')+'</div></div>';
-  h+='<div class="tabrow" role="tablist" aria-label="Sections">'+[['MAX','You'],['RATE','Rate'],['CAL','Calendar'],['PLAN','Plan']].map(function(t2){
+  h+='<div class="tabrow" role="tablist" aria-label="Sections">'+[['MAX','You'],['RATE','Rate'],['CAL','Calendar'],['PLAN','Plan'],['LIB','Library']].map(function(t2){
     return '<div class="tab'+(S.day===t2[0]?' on':'')+'" data-day="'+t2[0]+'" role="tab" tabindex="0"'
       +' aria-selected="'+(S.day===t2[0]?'true':'false')+'">'+t2[1]+'</div>'; }).join('')+'</div>';
   var __isTraining=PLAN.days.some(function(dd){ return dd.code===S.day; });
@@ -6290,6 +6362,11 @@ function renderInner(){
     try{ h+=backupBarHTML(); }catch(e){}
     if(S.hist){ h+=histDetailHTML(S.hist); }
     else { h+=printPickerHTML(); try{ h+=roadAheadHTML(false); }catch(e){} try{ h+=volumeHTML(); }catch(e){} h+=routineHTML(); h+=earlyCloseHTML(); h+=histListHTML(); h+=installHTML(); try{ h+=wipeHTML(); }catch(e){} }
+    app.innerHTML=h; wire(); return;
+  }
+  if(S.day==='LIB'){
+    h+=libraryHTML();
+    try{ h+=howSheetHTML(); }catch(e){}
     app.innerHTML=h; wire(); return;
   }
   if(S.day==='RATE'){
@@ -6779,7 +6856,7 @@ function dayUtilHTML(){
 }
 function paintFoot(){ var el=document.getElementById('footInner'); if(!el) return;
   var training=false;
-  try{ training=(S.setup!==false)&&['CAL','YOU','MAX','TEST','PLAN','RATE'].indexOf(S.day)<0&&focusMax()>0; }catch(e){}
+  try{ training=(S.setup!==false)&&['CAL','YOU','MAX','TEST','PLAN','RATE','LIB'].indexOf(S.day)<0&&focusMax()>0; }catch(e){}
   if(training&&S.view!=='deck'){ el.innerHTML=focusNavHTML(); }
   else { el.innerHTML=''; }   // Reset day off a training day is meaningless, and the error
                               // reporter is break-glass - neither earns permanent footer space
@@ -6922,6 +6999,12 @@ function wire(){
   document.querySelectorAll('[data-tsz]').forEach(b=>b.onclick=()=>{ S.tsize=b.dataset.tsz; save(); applyTheme(); render(); });
   document.querySelectorAll('[data-uimode]').forEach(b=>b.onclick=()=>{ S.uiMode=b.dataset.uimode; save(); render(); });
   document.querySelectorAll('[data-howto]').forEach(b=>b.onclick=()=>{ var i2=+b.dataset.howto; howtoOpen[i2]=!howtoOpen[i2]; render(); });
+  var __ls=document.getElementById('libSearch');
+  if(__ls){
+    __ls.oninput=function(){ libQ=__ls.value; libFilter(); };   // filter in place - a render() here would eat the keyboard focus
+    __ls.onkeydown=function(ev){ if(ev.key==='Enter'){ try{ __ls.blur(); }catch(e){} } };
+    libFilter();
+  }
   document.querySelectorAll('[data-radj]').forEach(b=>b.onclick=()=>{ S.restAdj=+b.dataset.radj; save(); render(); });
   document.querySelectorAll('[data-tone]').forEach(b=>b.onclick=()=>{ S.tone=b.dataset.tone; save(); render();
     audioReady(function(){ toneAt(SND().tick.f,0.12,AC.currentTime+0.01,0.28,SND().tick.w); }); });
@@ -8697,7 +8780,7 @@ function showOverlay(title, text, copied){
   document.getElementById('repSel').onclick=()=>{ const ta=document.getElementById('repTxt'); ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); };
 }
 document.getElementById('copyBtn').onclick=async()=>{
-  if(S.day==='MAX'||S.day==='CAL'||S.day==='PLAN'||S.day==='RATE'){ alertToast('Switch to a training day to copy a report'); return; }
+  if(S.day==='MAX'||S.day==='CAL'||S.day==='PLAN'||S.day==='RATE'||S.day==='LIB'){ alertToast('Switch to a training day to copy a report'); return; }
   const t=report();
   const copied=await tryCopy(t);
   const saved=await saveSessionLog(true);
