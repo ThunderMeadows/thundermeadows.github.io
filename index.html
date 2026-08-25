@@ -179,6 +179,13 @@ h1{margin:3px 0 0;font-size:26px;font-weight:800;letter-spacing:-.02em;text-tran
 .hw-grip{width:38px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 12px;}
 .hw-frame{position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;
   background:#000;border:1px solid var(--line);}
+.hw-frame.hw-wide{aspect-ratio:16/9;}
+.hw-yt{border:0;}
+.hw-ytbtn{display:flex;align-items:center;justify-content:center;margin-top:12px;padding:11px;
+  border-radius:10px;border:1px solid var(--line);color:var(--chalk);text-decoration:none;
+  font-weight:700;font-size:13.5px;-webkit-tap-highlight-color:transparent;}
+.hw-ytbtn:active{background:var(--panel2);}
+.hw-note{font-size:11px;color:var(--faint);text-align:center;margin-top:6px;}
 .hw-media{display:block;width:100%;height:100%;object-fit:contain;background:#000;}
 .hw-title{font-size:19px;font-weight:800;color:var(--chalk);letter-spacing:-.01em;margin-top:12px;}
 .hw-tags{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
@@ -3516,18 +3523,62 @@ function loadClips(){
     }).catch(function(){});
   }catch(e){}
 }
+// ---- video demonstrations ----
+// Three tiers, best available wins: a local clip (works offline), a curated YouTube video
+// (Jefe-approved form, plays in the sheet when there is signal), or a precise YouTube search
+// (never a dead link). The written cue always renders regardless - the gym has no signal.
+// Add curated videos here as 'Exercise Name': 'youtubeVideoId'.
+var HOWTO_YT={
+  'Back Extension': '5_ejbGfdAQE',
+  'Back Squat': 'i7J5h7BJ07g',
+  'Bench Press': 'gMgvBspQ9lk',
+  'Cable Rows': 'UCXxvVItLoM',
+  'Conventional Deadlift': 'AweC3UaM14o',
+  'DB Bench Press': 'YQ2s_Y7g5Qk',
+  'Face Pulls': '-MODnZdnmAQ',
+  'Front Squat': 'HHxNbhP16UE',
+  'Hammer Curls': 'XOEL4MgekYE',
+  'Hanging Leg Raises': '7FwGZ8qY5OU',
+  'Incline DB Curl': 'aTYlqC_JacQ',
+  'Incline DB Press': '5CECBjd7HLQ',
+  'Lat Pulldown': 'EUIri47Epcg',
+  'Lateral Raises': 'OuG1smZTsQQ',
+  'Leg Press': 'yZmx_Ac3880',
+  'Overhead Press': 'G2qpTG1Eh40',
+  'Overhead Rope Extension': '1u18yJELsh0',
+  'Romanian Deadlift': 'CN_7cz3P-1U',
+  'Rope Pushdowns': '-xa-6cQaZKY',
+  'Seated Leg Curl': 'Orxowest56U',
+  'Straight Bar Curl': 'JnLFSFurrqQ',
+  'Straight-Arm Pulldown': 'G9uNaXGTJ4w',
+  'Trap Bar Deadlift': 'v709aJKv-gM',
+  'Walking Lunges': 'eFWCn5iEbTU'
+};
+function ytIdFor(name){ return HOWTO_YT[name]||null; }
+function ytSearchURL(name){
+  return 'https://www.youtube.com/results?search_query='
+    + encodeURIComponent('how to '+name+' proper form technique');
+}
 function howBtnHTML(name){
-  return hasClip(name)? '<span class="hw-btn" data-how="'+esc(name)+'">How</span>' : '';
+  // every movement can teach itself now: clip, curated video, or at worst a precise search
+  return '<span class="hw-btn" data-how="'+esc(name)+'">How</span>';
 }
 function howSheetHTML(){
   if(!howEx) return '';
   var name=howEx, file=CLIPS[exSlug(name)];
-  if(!file) return '';
   var row=(typeof libRow==='function')? libRow(name) : null;
-  var isVid=/\.(mp4|webm|mov)$/i.test(file);
-  var media=isVid
-    ? '<video class="hw-media" src="clips/'+file+'" autoplay muted loop playsinline></video>'
-    : '<img class="hw-media" src="clips/'+file+'" alt="'+esc(name)+' demonstration">';
+  var media='';
+  if(file){
+    var isVid=/\.(mp4|webm|mov)$/i.test(file);
+    media=isVid
+      ? '<video class="hw-media" src="clips/'+file+'" autoplay muted loop playsinline></video>'
+      : '<img class="hw-media" src="clips/'+file+'" alt="'+esc(name)+' demonstration">';
+  } else if(ytIdFor(name)){
+    // privacy-enhanced embed, created only while the sheet is open; offline it simply won't load
+    media='<iframe class="hw-media hw-yt" src="https://www.youtube-nocookie.com/embed/'+ytIdFor(name)
+      +'?rel=0&modestbranding=1&playsinline=1" title="'+esc(name)+' demonstration"'
+      +' frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+  }
   // the athlete's own prescription for this movement today - the part a generic demo can't give
   var rx='';
   try{
@@ -3550,12 +3601,17 @@ function howSheetHTML(){
   return '<div class="hw-wrap" data-howclose="1">'
    +'<div class="hw-sheet" role="dialog" aria-label="How to do '+esc(name)+'">'
      +'<div class="hw-grip" aria-hidden="true"></div>'
-     +'<div class="hw-frame">'+media+'</div>'
+     +(media? '<div class="hw-frame'+(ytIdFor(name)&&!file?' hw-wide':'')+'">'+media+'</div>' : '')
      +'<div class="hw-title">'+esc(name)+'</div>'
      +(row? '<div class="hw-tags"><span>'+esc(row[2])+'</span><span>'+esc(row[1])+'</span></div>':'')
      +(row&&row[7]? '<div class="hw-cue">'+esc(row[7])+'</div>':'')
      +trains
      +rx
+     +((!file)? '<a class="hw-ytbtn" href="'+ytSearchURL(name)+'" target="_blank" rel="noopener">'
+        +'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align:-4px;margin-right:7px"><path d="M23 7.2s-.2-1.6-.9-2.3c-.9-.9-1.9-.9-2.4-1C16.4 3.5 12 3.5 12 3.5s-4.4 0-7.7.4c-.5.1-1.5.1-2.4 1-.7.7-.9 2.3-.9 2.3S.8 9.1.8 11v1.8c0 1.9.2 3.8.2 3.8s.2 1.6.9 2.3c.9.9 2 .9 2.5 1 1.9.2 7.6.4 7.6.4s4.4 0 7.7-.4c.5-.1 1.5-.1 2.4-1 .7-.7.9-2.3.9-2.3s.2-1.9.2-3.8V11c0-1.9-.2-3.8-.2-3.8zM9.8 15.3V8.1l6.4 3.6-6.4 3.6z"/></svg>'
+        +(ytIdFor(name)? 'More videos on YouTube' : 'Watch demonstrations on YouTube')
+        +'</a>'
+        +'<div class="hw-note">Video needs a signal \u2014 the written cues above always work.</div>' : '')
      +'<div class="hw-done" data-howclose="1">Got it</div>'
    +'</div></div>';
 }
