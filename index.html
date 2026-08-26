@@ -1095,7 +1095,7 @@ td.c-n.now{font-weight:700;}
 #app.is-locked .lockbar,
 #app.is-locked .tabrow,
 #app.is-locked .chiprow,
-#app.is-locked .weekrow{pointer-events:auto;opacity:1;}
+#app.is-locked .weekhead{pointer-events:auto;opacity:1;}
 
 /* A previewed future session is look-don't-touch: same inert layer as a logged day.
    Only the preview bar (Back to today), navigation, and day-agnostic .lockfree
@@ -1113,7 +1113,7 @@ td.c-n.now{font-weight:700;}
 #app.is-preview .prevbar,
 #app.is-preview .tabrow,
 #app.is-preview .chiprow,
-#app.is-preview .weekrow{pointer-events:auto;opacity:1;}
+#app.is-preview .weekhead{pointer-events:auto;opacity:1;}
 
 /* ---- photo, full size ---- */
 .avabig-wrap{position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.88);display:flex;
@@ -2527,7 +2527,7 @@ function lockGuard(ev){
       // stay live. The day-agnostic .lockfree utilities - cardio and bodyweight - edit TODAY's
       // data and stay live on a logged-day review, but a preview is browsing, not training.
       if(t.closest('.prevbar') || t.closest('.tabrow') || t.closest('.chiprow')
-         || t.closest('.weekrow') || t.closest('#coachHost') || t.closest('.wn-wrap')
+         || t.closest('.weekhead') || t.closest('#coachHost') || t.closest('.wn-wrap')
          || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('.avabig-wrap')) return;
       ev.stopPropagation();
       if(ev.cancelable) ev.preventDefault();
@@ -2535,7 +2535,7 @@ function lockGuard(ev){
       return;
     }
     if(t.closest('[data-unlock]') || t.closest('.tabrow') || t.closest('.chiprow')
-       || t.closest('.weekrow') || t.closest('#coachHost') || t.closest('.wn-wrap')
+       || t.closest('.weekhead') || t.closest('#coachHost') || t.closest('.wn-wrap')
        || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('#gbHost')
        // celebrations sit on top of a day that has just been logged, so their dismiss
        // controls must stay live or the athlete is stuck behind them
@@ -6972,7 +6972,19 @@ function wire(){
   });
   document.querySelectorAll('[data-backlive]').forEach(el=>el.onclick=()=>{
     try{ syncToNext(); }catch(e){}
-    try{ var nx=nextSession(); if(nx){ S.day=nx.code; S.week=nx.week; } }catch(e){}
+    try{
+      var nx=nextSession();
+      if(nx && loggedToday() && nx.week===S.week && nx.code===S.day){
+        // GATED PREVIEW: the next session IS this page, just locked until tomorrow -
+        // jumping to nextSession() would land right back here. "Today" is the session
+        // already banked, so return to review it instead of looping.
+        var p=curLOGP(), t=String(shiftDate());
+        var k=(logKeys||[]).filter(function(x){ return x.indexOf(p+t+'-')===0; }).sort().pop();
+        var m=k? k.slice(p.length).match(/-([A-Za-z]+)-W(\d+)B(\d+)$/) : null;
+        if(m && (+m[3])===cyc()){ S.day=m[1]; S.week=+m[2]; S.focus=0; S.lastTDay=m[1]; save(); render(); return; }
+      }
+      if(nx){ S.day=nx.code; S.week=nx.week; }
+    }catch(e){}
     S.focus=firstOpenFocus(); save(); render();
   });
   document.querySelectorAll('[data-resave]').forEach(el=>el.onclick=()=>{ resaveVisitedLog(); });
