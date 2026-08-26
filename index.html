@@ -2537,8 +2537,12 @@ function lockGuard(ev){
       // overlays floating above the session (walkthrough, what's-new, report, enlarged photo)
       // stay live. The day-agnostic .lockfree utilities - cardio and bodyweight - edit TODAY's
       // data and stay live on a logged-day review, but a preview is browsing, not training.
+      // Gummy lives OVER the session, not in it - he is day-agnostic decoration and must
+      // never freeze. The preview lockdown captured his pointerdown, so on a gated preview
+      // (the day after finishing a week, for example) he could not be dragged out at all.
       if(t.closest('.prevbar') || t.closest('.tabrow') || t.closest('.chiprow')
          || t.closest('.weekhead') || t.closest('#coachHost') || t.closest('.wn-wrap')
+         || t.closest('#gbHost') || t.closest('.gb-hint')
          || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('.avabig-wrap')) return;
       ev.stopPropagation();
       if(ev.cancelable) ev.preventDefault();
@@ -4086,7 +4090,7 @@ function gummyInit(){
     // posed. Reappears on each open until then: a feature nobody finds may as well not exist.
     try{
       if(typeof S!=='undefined' && S && !S.gbSeen && !document.getElementById('gbHint')){
-        var gh=document.createElement('div'); gh.id='gbHint'; gh.className='gb-hint';
+        var gh=document.createElement('div'); gh.id='gbHint'; gh.className='gb-hint lockfree';
         gh.textContent='Pull me to the middle \u2014 today\u2019s muscles glow';
         gh.style.top=Math.round((window.innerHeight||600)*0.56+40)+'px';
         gh.onclick=function(){ try{ gh.remove(); }catch(e){} };
