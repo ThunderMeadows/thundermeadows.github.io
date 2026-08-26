@@ -234,8 +234,16 @@ h1{margin:3px 0 0;font-size:26px;font-weight:800;letter-spacing:-.02em;text-tran
 #gbHost.gb-pose .gb-r.on{opacity:var(--i,.9);animation:gbPulse 1.8s ease-in-out infinite;}
 /* Docked, the visible sliver keeps a soft steady ember - so the feature advertises itself
    every time he peeks out. The full breathing pulse stays reserved for pose mode. */
-#gbHost.gb-docked .gb-r.on{opacity:calc(var(--i,.9)*.55);}
-@keyframes gbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#gbHost.gb-docked .gb-r.on{opacity:calc(var(--i,.9)*.85);}
+/* Pose = spotlight. The artwork is ALREADY a golden lightbulb at near-peak brightness, so no
+   additive glow can read against it - screen blending has no headroom left to add. Dim the
+   candy while posed and the trained muscles punch through by contrast: lights down, muscles
+   lit. Docked stays undimmed - the wow is reserved for pulling him out. */
+#gbHost.gb-pose .gb-base,
+#gbHost.gb-pose .gb-lids,
+#gbHost.gb-pose .gb-tail{filter:brightness(.58) saturate(.88);}
+.gb-base,.gb-lids,.gb-tail{transition:filter .45s ease;}
+@keyframes gbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
 .gb-hint{position:fixed;left:44px;z-index:79;max-width:210px;padding:10px 13px;
   border-radius:var(--r-sm,12px);background:var(--panel,#23262B);
   border:1px solid var(--amber,#E8A33D);color:var(--chalk,#EDEDE8);
@@ -2532,17 +2540,17 @@ function lockGuard(ev){
     if(!dayLocked() && !pv) return;
     var t=ev.target;
     if(!t || !t.closest) return;
+    // Gummy is UNCONDITIONALLY exempt. He floats over every page state and freezing him is
+    // never correct - this sits above every branch so no lock mode, present or future, can
+    // catch him. Field-caught twice in two days when he lived in per-branch whitelists.
+    if(t.closest('#gbHost') || t.closest('.gb-hint')) return;
     if(pv && !dayLocked()){
       // FUTURE PREVIEW: total lockdown. Only navigation off the page, the preview bar, and
       // overlays floating above the session (walkthrough, what's-new, report, enlarged photo)
       // stay live. The day-agnostic .lockfree utilities - cardio and bodyweight - edit TODAY's
       // data and stay live on a logged-day review, but a preview is browsing, not training.
-      // Gummy lives OVER the session, not in it - he is day-agnostic decoration and must
-      // never freeze. The preview lockdown captured his pointerdown, so on a gated preview
-      // (the day after finishing a week, for example) he could not be dragged out at all.
       if(t.closest('.prevbar') || t.closest('.tabrow') || t.closest('.chiprow')
          || t.closest('.weekhead') || t.closest('#coachHost') || t.closest('.wn-wrap')
-         || t.closest('#gbHost') || t.closest('.gb-hint')
          || t.closest('.rpt-wrap') || t.closest('.hw-wrap') || t.closest('.avabig-wrap')) return;
       ev.stopPropagation();
       if(ev.cancelable) ev.preventDefault();
@@ -4024,7 +4032,7 @@ function gbLight(){
     var R=gummyRegions(), max=0, kk; for(kk in R) if(R[kk]>max) max=R[kk];
     GB.host.querySelectorAll('.gb-r').forEach(function(el){
       var v=R[el.getAttribute('data-gr')]||0;
-      if(max>0 && v>0.5){ el.classList.add('on'); el.style.setProperty('--i', (0.5+0.5*Math.min(1, v/max)).toFixed(2)); }
+      if(max>0 && v>0.5){ el.classList.add('on'); el.style.setProperty('--i', (0.75+0.25*Math.min(1, v/max)).toFixed(2)); }
       else { el.classList.remove('on'); el.style.removeProperty('--i'); }
     });
   }catch(e){}
@@ -4053,7 +4061,7 @@ function gbLayers(){
       lids+='<ellipse class="gb-lid" cx="'+(e[0]/100*im.w).toFixed(1)+'" cy="'+(e[1]/100*im.h).toFixed(1)+'" '
         +'rx="'+(e[2]/100*im.w/2).toFixed(1)+'" ry="'+(e[3]/100*im.h/2).toFixed(1)+'" fill="'+e[4]+'"/>';
     });
-    var blur=(im.w*0.05).toFixed(1);
+    var blur=(im.w*0.035).toFixed(1);   // tighter = hotter: the wide blur was smearing the energy away
     out+='<div class="gb-view'+(view==='front'?' on':'')+'" data-gbv="'+view+'" '
       +'style="--gbimg:url('+"'"+im.u+"'"+')">'
       +'<div class="gb-base"></div>'
@@ -4065,12 +4073,16 @@ function gbLayers(){
         // orange cancels out to a pale smudge that reads as a shiny spot, not a lit muscle.
         // Warm white -> amber -> orange reads as heat from inside the gummy - and speaks the
         // card's established language: amber glow = live (same as the active set).
-        +'<defs><radialGradient id="gbGlow"><stop offset="0" stop-color="#FFF7E6"/>'
-          +'<stop offset=".45" stop-color="#FFC24D" stop-opacity=".95"/>'
-          +'<stop offset="1" stop-color="#FF7A00" stop-opacity="0"/></radialGradient>'
+        // Screen blend over bright candy compresses everything toward pale - so the glow
+        // needs ENERGY, not just hue: white-hot core, saturated shoulders, and the region
+        // set is drawn twice below for double luminance.
+        +'<defs><radialGradient id="gbGlow"><stop offset="0" stop-color="#FFFFFF"/>'
+          +'<stop offset=".35" stop-color="#FFD34D" stop-opacity=".95"/>'
+          +'<stop offset=".7" stop-color="#FF7A1A" stop-opacity=".6"/>'
+          +'<stop offset="1" stop-color="#FF3D00" stop-opacity="0"/></radialGradient>'
         +'<filter id="gbB'+view+'" x="-40%" y="-40%" width="180%" height="180%">'
         +'<feGaussianBlur stdDeviation="'+blur+'"/></filter></defs>'
-        +'<g filter="url(#gbB'+view+')">'+sh+'</g></svg></div>'
+        +'<g filter="url(#gbB'+view+')">'+sh+sh+'</g></svg></div>'
       +(lids? '<div class="gb-lids"><svg viewBox="0 0 '+im.w+' '+im.h+'" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'+lids+'</svg></div>' : '')
       +'</div>';
   });
