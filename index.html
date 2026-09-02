@@ -40,7 +40,7 @@
 <meta name="twitter:title" content="Deadstop — Session Card">
 <meta name="twitter:description" content="Your training block, one session at a time. Loads, sets and rest computed from your own numbers - offline, on your phone, no account.">
 <meta name="twitter:image" content="https://thundermeadows.github.io/icon-512.png">
-<title>Deadstop · Session Card v191</title>
+<title>Deadstop · Session Card v199</title>
 <style>
 :root{
   --bg:#F1F2F0; --panel:#FFFFFF; --panel2:#E7E9E6; --line:#D5D8D3;
@@ -930,10 +930,11 @@ textarea{width:100%;min-height:78px;background:var(--panel);border:2px solid var
 .streak.t4{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset,0 0 14px -4px var(--amber);}
 .streak.t3 .stk-flame,.streak.t4 .stk-flame{width:16px;height:21px;}
 .streak.t4 .stk-n{color:var(--amber);}
-.blockfx{position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.82);display:flex;align-items:center;
-  justify-content:center;padding:22px;animation:bfxIn .35s ease both;}
+.blockfx{position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.82);display:flex;align-items:flex-start;
+  justify-content:center;padding:22px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  animation:bfxIn .35s ease both;}
 @keyframes bfxIn{from{opacity:0}to{opacity:1}}
-.bfx-card{position:relative;text-align:center;max-width:340px;animation:bfxRise .6s cubic-bezier(.2,1.3,.35,1) both;}
+.bfx-card{position:relative;text-align:center;max-width:340px;margin:auto;animation:bfxRise .6s cubic-bezier(.2,1.3,.35,1) both;}
 @keyframes bfxRise{from{transform:translateY(16px) scale(.94);opacity:0}to{transform:none;opacity:1}}
 .bfx-rays{position:absolute;left:50%;top:44px;width:0;height:0;}
 .bfx-rays i{position:absolute;width:3px;height:26px;border-radius:2px;background:var(--amber);opacity:0;
@@ -965,9 +966,18 @@ textarea{width:100%;min-height:78px;background:var(--panel);border:2px solid var
    but ABOVE the install sheet (400): shipped at 215, it let the install sheet cover the
    disclaimer on a fresh phone, so the first thing an athlete met was "add to home screen"
    and they acknowledged nothing. Nothing outranks the disclaimer. */
+/* FIELD-CAUGHT 2026-09-02 (Android): this was display:flex + align-items:center with
+   overflow-y:auto. When the content is taller than the screen, a CENTRED flex item overflows
+   in BOTH directions and the overflow cannot be scrolled to - so the "I understand" button
+   sat in unreachable space on shorter viewports and at larger system display sizes. The
+   button was visible-ish and genuinely un-pressable. margin:auto on the child centres the
+   same way when there is room and scrolls correctly when there is not. */
 .disc-wrap{position:fixed;inset:0;z-index:410;background:var(--bg);overflow-y:auto;
-  padding:28px 22px calc(28px + env(safe-area-inset-bottom));display:flex;align-items:center;}
-.disc-inner{max-width:480px;margin:0 auto;width:100%;}
+  -webkit-overflow-scrolling:touch;
+  padding:28px 22px calc(28px + env(safe-area-inset-bottom));display:flex;align-items:flex-start;}
+.disc-inner{max-width:480px;margin:auto;width:100%;}
+#discOk{min-height:48px;line-height:1.2;display:flex;align-items:center;justify-content:center;
+  width:100%;box-sizing:border-box;-webkit-tap-highlight-color:rgba(255,255,255,.15);touch-action:manipulation;}
 .disc-inner h2{font-size:22px;letter-spacing:-.01em;margin:0 0 12px;}
 .disc-inner p{font-size:14.5px;line-height:1.65;color:var(--chalk);margin:0 0 12px;}
 .disc-inner p b{color:var(--amber);}
@@ -1451,9 +1461,10 @@ td.c-n.now{font-weight:700;}
 
 /* ---- photo, full size ---- */
 .avabig-wrap{position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.88);display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;
+  flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding:24px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
   animation:hwFade .18s ease both;cursor:pointer;touch-action:manipulation;}
-.avabig{max-width:min(86vw,420px);max-height:64vh;width:auto;height:auto;object-fit:contain;
+.avabig{margin:auto auto 0;max-width:min(86vw,420px);max-height:64vh;width:auto;height:auto;object-fit:contain;
   border-radius:20px;border:3px solid var(--amber);box-shadow:0 18px 50px rgba(0,0,0,.6);
   animation:avaPop .3s cubic-bezier(.2,.9,.25,1) both;}
 @keyframes avaPop{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
@@ -8143,14 +8154,22 @@ function bootDisc(force){
       +'<p><b>Check with a qualified professional before starting</b> this or any training program \u2014 especially with a medical condition, during pregnancy, or if something already hurts.</p>'
       +'<p>If a movement causes pain, <b>stop it</b>. Swap it for one that doesn\u2019t bother you \u2014 the card never asks why \u2014 and see a professional.</p>'
       +'<p>Lifting carries real risk. By continuing, you accept it: <b>you train at your own risk</b>.</p>'
-      +'<div class="daybtn" id="discOk" style="margin-top:16px">I understand</div>'
+      +'<button type="button" class="daybtn" id="discOk" style="margin-top:16px">I understand</button>'
       +'<div class="disc-more" data-termsshow="1">Terms &amp; Privacy</div>'
       +'</div>';
     document.body.appendChild(v);
     var tl=v.querySelector('[data-termsshow]');
     if(tl) tl.onclick=function(){ termsShow(); };   // opens ABOVE the gate; closing returns here
     var ok=document.getElementById('discOk');
+    // a real <button>, and the accept path is also reachable by keyboard and by a delegated
+    // listener on the gate itself - if the direct binding ever fails, the tap still lands
+    if(ok){ ok.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); ok.click(); } }); }
+    v.addEventListener('click', function(ev){
+      var t=ev.target;
+      if(t && t.closest && t.closest('#discOk') && !ok.__fired){ ok.click(); } });
     if(ok) ok.onclick=function(){
+      ok.__fired=true;
       if(!force){ S.discAck={v:DISC_V, d:localDate()}; save(); }
       try{ v.remove(); }catch(e){}
       // whatever boot deferred behind the gate goes now - install sheet, tour, in order
@@ -8249,9 +8268,26 @@ function termsShow(){
 // ===== BLOCK CALENDAR, COUNTDOWNS, SCHEDULE EXPORT, STREAK GUARD (2026-09-01) =====
 // All of it runs off facts the card already keeps: PLAN.start/weeks, the banked-session
 // dayset, and the session-length estimate. Nothing here needs a network or a permission.
-function calEndIso(){ try{ var d=new Date(PLAN.start+'T12:00:00'); d.setDate(d.getDate()+PLAN.weeks*7-1);
+// HIS RULING 2026-09-02: the engine counts SESSIONS, not days. A week is PLAN.days.length
+// banked sessions however many calendar days they take - rest days stretch it and the card
+// cannot know by how much. So nothing projects a calendar end date any more; the block is
+// measured in sessions left, which is the one thing the engine actually knows.
+function sessLeft(){
+  try{
+    var per=PLAN.days.length, codes=PLAN.days.map(function(d){ return d.code; });
+    var idx=Math.max(0, codes.indexOf(S.day));
+    var banked=false; try{ banked=dayLocked(); }catch(e){}
+    var thisWeek=per-idx-(banked?1:0);
+    return Math.max(0, (PLAN.weeks-(S.week||1))*per + thisWeek);
+  }catch(e){ return null; }
+}
+// calEndIso and calDaysLeft are RETIRED as projections - kept as null-returning stubs so
+// nothing that still references them can throw, and so the retirement is visible in code.
+function calEndIso(){ return null; }
+function calDaysLeft(){ return null; }
+function calEndIso_RETIRED(){ try{ var d=new Date(PLAN.start+'T12:00:00'); d.setDate(d.getDate()+PLAN.weeks*7-1);
   return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }catch(e){ return null; } }
-function calDaysLeft(){ try{ var e=new Date(calEndIso()+'T12:00:00'), n=new Date(shiftDate()+'T12:00:00');
+function calDaysLeft_RETIRED(){ try{ var e=new Date(calEndIso_RETIRED()+'T12:00:00'), n=new Date(shiftDate()+'T12:00:00');
   return Math.max(0, Math.round((e-n)/86400000)); }catch(e){ return null; } }
 // Training weekdays: the athlete's setting first; failing that, read them off the log -
 // any weekday trained twice or more is treated as a training day. Read, not invented.
@@ -8288,7 +8324,7 @@ function calStreakRisk(){
 function calCountHTML(){
   var bits=[];
   try{ bits.push('Week '+Math.min(S.week||1,PLAN.weeks)+' of '+PLAN.weeks); }catch(e){}
-  var dl=calDaysLeft(); if(dl!=null) bits.push(dl===0? 'Block ends today' : 'Block ends in '+dl+' day'+(dl===1?'':'s'));
+  var sl=sessLeft(); if(sl!=null) bits.push(sl===0? 'Block complete' : sl+(sl===1?' session':' sessions')+' left in the block');
   var ns=calNextSession();
   if(ns!=null) bits.push(ns===0? 'Session day: today' : 'Next session in '+ns+' day'+(ns===1?'':'s'));
   calCountdownList(2).forEach(function(e){ bits.push(e.label); });
@@ -8308,11 +8344,11 @@ function icsForBlock(){
     var tm=(S.trainTime||'17:30').split(':'), hh=('0'+tm[0]).slice(-2), mi=('0'+(tm[1]||'00')).slice(-2);
     var codes=PLAN.days.map(function(d){ return d.code; });
     var ptr=Math.max(0, codes.indexOf(S.day));
-    var endIso=calEndIso(), ev=[], n=new Date(shiftDate()+'T12:00:00');
-    for(var i=0;i<120;i++){
+    var left=sessLeft(), ev=[], n=new Date(shiftDate()+'T12:00:00');
+    if(!left) return null;
+    for(var i=0;i<180 && ev.length<left;i++){
       var d=new Date(n.getTime()); d.setDate(d.getDate()+i);
       var iso=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
-      if(!endIso || iso>endIso) break;
       if(td.indexOf(d.getDay())<0) continue;
       if(i===0 && streakDayset()[iso]) continue;
       var day=PLAN.days[ptr%PLAN.days.length]; ptr++;
@@ -8450,9 +8486,9 @@ function mailSweep(){
         : e.t+' in '+e.days+' days. Nothing new between now and then - sharpen what you have.';
       mailPush('cd-'+e.t.replace(/\W+/g,'')+'-'+e.days+'-'+today, line, e.days===0? 'encouraging':'focused'); }); }catch(e){}
     // 4 - block landmarks
-    try{ var dl=calDaysLeft();
-      if(dl===7) mailPush('bend7-'+cyc(), 'One week left in the block. Finish it the way you started it, but stronger, because you are.', 'focused');
-      if(dl===0) mailPush('bend0-'+cyc(), 'Block ends today. Then we count what you built. I counted already. It is a lot.', 'reflective'); }catch(e){}
+    try{ var sl=sessLeft();
+      if(sl===PLAN.days.length) mailPush('bend7-'+cyc(), 'One week of sessions left in the block. Finish it the way you started it, but stronger, because you are.', 'focused');
+      if(typeof blockEndDue==='function' && blockEndDue()) mailPush('bend0-'+cyc(), 'The block is complete. Then we count what you built. I counted already. It is a lot.', 'reflective'); }catch(e){}
     // 5 - deload week opens
     try{ if(isDeload()) mailPush('deload-'+cyc(),
       'Deload week. Lighter on purpose - the growing happens now. Rest is training. Pizza is rest.', 'reflective'); }catch(e){}
@@ -8527,8 +8563,92 @@ function mailShow(){
     if(c) c.onclick=function(){ S.mail=mailBox().filter(function(x2){ return !x2.read; }); save(); try{ v.remove(); }catch(e){} mailShow(); };
   }catch(e){}
 }
+// ===== THE GALLERY (2026-09-02, his ask) =====
+// Every banked session's wrap-up, reopenable from the calendar and shareable later - nobody
+// wants to compose a post standing in a gym. Built ONLY from what is already stored: exHist
+// (sets and weights by date), prs (records by date), and the log key (day code). Read-only.
+function sessionSnapshot(iso){
+  try{
+    var rows=[], ton=0, sets=0, names=[];
+    Object.keys(S.exHist||{}).forEach(function(nm){
+      (S.exHist[nm]||[]).forEach(function(r){
+        if(!r || r.d!==iso) return;
+        var reps=Array.isArray(r.sets)? r.sets : [], ws=Array.isArray(r.ws)? r.ws : [];
+        var n=reps.length; if(!n) return;
+        var top=null; ws.forEach(function(v){ if(typeof v==='number' && (top==null||v>top)) top=v; });
+        var tgt=reps.length? Math.round(reps.reduce(function(a,b){return a+(b||0);},0)/reps.length) : 0;
+        rows.push([nm, n+' \u00d7 '+tgt+(typeof top==='number'? '  @  '+WV(top)+uLbl():'')]);
+        names.push(nm); sets+=n;
+        reps.forEach(function(rp,i){ var w=ws[i]; if(typeof w==='number'&&isFinite(w)) ton+=w*(rp||0); });
+      });
+    });
+    if(!rows.length) return null;
+    var prs=(S.prs||[]).filter(function(p){ return p&&p.d===iso; });
+    var code='', title='';
+    try{ var k=(logKeys||[]).find(function(x){ return x.indexOf(iso)>-1; });
+      var m=k && k.match(/\d{4}-\d{2}-\d{2}-([A-Za-z]+)-W\d+B\d+$/); code=m? m[1] : '';
+      var pd=code && PLAN.days.find(function(d){ return d.code===code; }); title=pd? (pd.name||pd.title||code) : ''; }catch(e){}
+    return {date:iso, code:code, title:title, rows:rows, prs:prs, ton:Math.round(ton), sets:sets, exCount:names.length};
+  }catch(e){ return null; }
+}
+function galleryDates(lim){
+  try{
+    var ds={}; Object.keys(S.exHist||{}).forEach(function(nm){ (S.exHist[nm]||[]).forEach(function(r){ if(r&&r.d) ds[r.d]=1; }); });
+    return Object.keys(ds).sort().reverse().slice(0, lim||12);
+  }catch(e){ return []; }
+}
+function galleryRowHTML(iso){
+  var sn=sessionSnapshot(iso); if(!sn) return '';
+  var dt=new Date(iso+'T12:00:00');
+  return '<div class="ex" style="margin-top:8px"><div class="ex-head">'
+    +'<div class="target-label">'+dt.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})
+    +(sn.title? ' \u00b7 '+esc(sn.title):'')+'</div>'
+    +'<div class="exnote" style="padding:2px 0 8px;font-style:normal">'+sn.sets+' sets \u00b7 '
+    +Math.round(isKg()? sn.ton*0.45359237 : sn.ton).toLocaleString()+' '+uLbl()+' moved'
+    +(sn.prs.length? ' \u00b7 <b style="color:var(--green)">'+sn.prs.length+(sn.prs.length===1?' record':' records')+'</b>':'')+'</div>'
+    +'<div class="chiprow" style="gap:8px"><div class="chip" data-galopen="'+iso+'" style="flex:1;text-align:center">Wrap-up</div>'
+    +'<div class="chip" data-galshare="'+iso+'" style="flex:1;text-align:center">Share</div></div>'
+    +'</div></div>';
+}
+function galleryHTML(){
+  var ds=galleryDates(12); if(!ds.length) return '';
+  return '<div class="block lockfree" id="gallery"><h3>Past sessions</h3>'
+    +'<div class="exnote" style="padding:0 0 4px">Every banked session\u2019s wrap-up, kept. Reopen it, or share it from the couch instead of the gym.</div>'
+    +ds.map(galleryRowHTML).join('')+'</div>';
+}
+function galleryOpen(iso){
+  try{
+    var sn=sessionSnapshot(iso); if(!sn){ alertToast('Nothing stored for that day'); return; }
+    var old=document.getElementById('galGate'); if(old) old.remove();
+    var v=document.createElement('div'); v.id='galGate'; v.className='terms-wrap lockfree'; v.style.zIndex='406';
+    var dt=new Date(iso+'T12:00:00');
+    v.innerHTML='<div class="terms-inner">'
+      +'<div class="terms-x" id="galX">Close</div>'
+      +'<h2>'+dt.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+'</h2>'
+      +(sn.title? '<p class="tnote">'+esc(sn.title)+'</p>':'')
+      +'<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">'
+      +'<div><div class="mono" style="font-size:24px;font-weight:800">'+Math.round(isKg()? sn.ton*0.45359237 : sn.ton).toLocaleString()+'</div><div style="font-size:11px;color:var(--dim)">'+uLbl()+' moved</div></div>'
+      +'<div><div class="mono" style="font-size:24px;font-weight:800">'+sn.sets+'</div><div style="font-size:11px;color:var(--dim)">sets logged</div></div>'
+      +'<div><div class="mono" style="font-size:24px;font-weight:800">'+sn.exCount+'</div><div style="font-size:11px;color:var(--dim)">movements</div></div>'
+      +'</div>'
+      +(sn.prs.length? '<div class="cue" style="padding:10px 0 0;color:var(--green)">\u2605 '+sn.prs.map(function(p){ return esc(p.ex)+' '+p.kind+' '+p.val+' (was '+p.prev+')'; }).join(' \u00b7 ')+'</div>':'')
+      +'<div style="margin-top:12px">'+sn.rows.map(function(r){ return '<div class="ed-row" style="margin-top:4px"><div style="flex:1;font-size:14px">'+esc(r[0])+'</div><div class="mono" style="font-size:13px;color:var(--dim)">'+esc(r[1])+'</div></div>'; }).join('')+'</div>'
+      +'<div class="daybtn" data-galshare="'+iso+'" style="margin-top:16px">Share this session</div>'
+      +'</div>';
+    document.body.appendChild(v);
+    var x=document.getElementById('galX'); if(x) x.onclick=function(){ try{ v.remove(); }catch(e){} };
+    v.querySelectorAll('[data-galshare]').forEach(function(b){ b.onclick=function(){ galleryShare(iso); }; });
+  }catch(e){ try{ oops('galleryOpen',e); }catch(e2){} }
+}
+function galleryShare(iso){
+  var sn=sessionSnapshot(iso); if(!sn){ alertToast('Nothing stored for that day'); return; }
+  SHARE_SNAP=sn;
+  try{ shareRecapImage(); } finally { setTimeout(function(){ SHARE_SNAP=null; }, 4000); }
+}
 function calStripHTML(){
+  var last=''; try{ var ds=galleryDates(1); if(ds.length && ds[0]!==shiftDate()) last='<div class="prof-edit" data-galopen="'+ds[0]+'" style="padding:6px 0 0">Last session’s wrap-up</div>'; }catch(e){}
   return '<div class="block lockfree" id="calStrip">'+calCountHTML()
+    +last
     +'<div class="prof-edit" data-gocal="1" style="padding:6px 0 0">Open the calendar</div></div>';
 }
 function calBlockHTML(){
@@ -10036,6 +10156,10 @@ function recordHistory(){
     out.forEach(function(p){ S.prs.push({d:dt,ex:p.ex,kind:p.kind,val:p.val,prev:p.prev}); });
     if(S.prs.length>200) S.prs=S.prs.slice(-200);
     S.prShow=out;
+    // FIELD-CAUGHT 2026-09-02: dismissing a prompt earlier in the day hid EVERY later prompt
+    // that day, including the one for records set at banking. Cardio and extra lifts already
+    // re-earned the screen; new records did not. A record always earns the screen.
+    S.prHide=0;
   }
   return out;
 }
@@ -10272,13 +10396,17 @@ function shareCardArt(done){
 function shareCardDraw(cb){
   shareCardArt(function(ART){ shareCardPaint(cb, ART.logo, ART.bear); });
 }
+// SHARE_SNAP: when set, the painter draws THAT session instead of today's - the gallery
+// (2026-09-02) reopens any banked day. Null means live, and every existing caller leaves it
+// null, so the gym-day path is byte-for-byte what it was.
+var SHARE_SNAP=null;
 function shareCardPaint(cb, LOGO, BEAR){
   try{
     // ===== measure first, then size the sheet =====
     // Rule set 2026-08-31: the sheet hides nothing - this is FOR sharing, so every logged
     // movement prints. The canvas grows to fit the session instead of the session shrinking
     // to fit the canvas. 1080x1350 (4:5) stays the minimum; a big day makes a taller image.
-    var prs=todayPRs();
+    var prs=SHARE_SNAP? SHARE_SNAP.prs.slice() : todayPRs();
     (function(){ var by={}, order=[];
       prs.forEach(function(p){ if(!p||!p.ex) return;
         if(!by[p.ex]){ by[p.ex]={ex:p.ex, parts:[]}; order.push(p.ex); }
@@ -10286,7 +10414,8 @@ function shareCardPaint(cb, LOGO, BEAR){
       prs=order.map(function(k){ return {ex:k, txt:by[k].parts.join('  \u00b7  ')}; });
     })();
     var rows=[];
-    try{
+    if(SHARE_SNAP){ rows=SHARE_SNAP.rows.map(function(r){ return r.slice(); }); }
+    else try{
       var dR=dayObj();
       dR.exercises.forEach(function(ex,i){
         var st=null; try{ st=S.data[exKey(i)]; }catch(e){} if(!st) return;
@@ -10341,8 +10470,8 @@ function shareCardPaint(cb, LOGO, BEAR){
     if(!LOGO){ x.fillStyle=AMBER; x.font=F(34,800); x.letterSpacing='12px';
       x.fillText('DEADSTOP', 72, y); x.letterSpacing='0px'; }
     var dt='', dn='';
-    try{ dt=(S.when&&S.when.date)||localDate(); }catch(e){}
-    try{ var d0=dayObj(); dn=(d0&&d0.name)?d0.name:''; }catch(e){}
+    try{ dt=SHARE_SNAP? SHARE_SNAP.date : ((S.when&&S.when.date)||localDate()); }catch(e){}
+    try{ if(SHARE_SNAP) dn=SHARE_SNAP.title||''; else { var d0=dayObj(); dn=(d0&&d0.name)?d0.name:''; } }catch(e){}
     x.fillStyle=DIM; x.font=F(24,700);
     x.fillText(dt+(dn? '   \u00b7   '+dn : ''), W-72-x.measureText(dt+(dn? '   \u00b7   '+dn : '')).width, y-14);
     // The drawn wordmark is 131px tall; a 68px advance parked ATHLETE underneath it.
@@ -10893,7 +11022,7 @@ function wireFocus(){
 
 const PLAN = {"block": "Block 1 - Squat Priority / Cut Maintenance", "start": "2026-08-03", "weeks": 6, "maxes": {"bench": 300.0, "ohp": 150.0, "squat": 315.0, "dead": 360.0}, "days": [{"code": "A", "title": "Push - Heavy", "exercises": [{"name": "Bench Press", "sets": 4, "reps": "5", "load": "245", "loadNum": 245.0, "rir": "2, last set 1", "note": "82% of a 300 programming max", "perHand": false, "barbell": true, "deload": 140, "rest": "3:00", "warmup": "bar x10, 135 x5, 185 x3, 215 x1", "subs": ["DB Bench Press", "Machine Chest Press", "Smith Bench Press"], "last": "last (Aug 03): 235 \u2014 5,5,5,5 @2,2,2,1", "cue": "Leg drive before the bar moves - squeeze the floor away.", "wk": [245, 245, 255, 255, 265, 140], "maxKey": "bench", "pct": [0.81667, 0.81667, 0.85, 0.85, 0.88333, 0.46667]}, {"name": "Overhead Press", "sets": 3, "reps": "8", "load": "105", "loadNum": 105.0, "rir": "2", "note": "Barbell - your other lagging lift. W1-2: ride reps to 9-10 at 105. W3-4: 115. W5: 125.", "perHand": false, "barbell": true, "deload": 60, "rest": "3:00", "warmup": "bar x10, 75 x5, 95 x3", "subs": ["Seated DB Shoulder Press", "Machine Shoulder Press", "Arnold Press"], "last": "last (Aug 03): 105 \u2014 8,8,8 @2,2,2", "cue": "Glutes locked, ribs down - press around your face, finish behind your ears.", "wk": [105, 105, 115, 115, 125, 60], "maxKey": "ohp", "pct": [0.7, 0.7, 0.76667, 0.76667, 0.83333, 0.4]}, {"name": "Incline DB Press", "sets": 3, "reps": "8-10", "load": "65", "loadNum": 65.0, "rir": "2, last set 1", "note": "", "perHand": true, "barbell": false, "deload": 40, "rest": "2:00", "warmup": "", "subs": ["Incline Barbell Press", "Machine Incline Press", "Weighted Dips"], "last": "last (Aug 03): 60 \u2014 10,10,9 @2,2,1", "cue": "Elbows at 45, drive the bells together at the top without clanking.", "wk": [65, 65, 70, 70, 75, 40], "maxKey": null, "pct": null}, {"name": "Lateral Raises", "sets": 3, "reps": "12-15", "load": "15", "loadNum": 15.0, "rir": "1", "note": "Strict. No swinging.", "perHand": true, "barbell": false, "deload": 10, "rest": "1:30", "warmup": "", "subs": ["Cable Lateral Raise", "Machine Lateral Raise", "Plate Lateral Raise"], "last": "last (Aug 03): 15 \u2014 15,15,15 @1,1,1", "cue": "Lead with the elbows, pour the pitcher - nothing above shoulder height.", "wk": [15, 20, 20, 20, 25, 10], "maxKey": null, "pct": null}, {"name": "Rope Pushdowns", "sets": 3, "reps": "12-15", "load": "35", "loadNum": 35.0, "rir": "1", "note": "", "perHand": false, "barbell": false, "deload": 20, "rest": "1:30", "warmup": "", "subs": ["Straight-Bar Pushdown", "Overhead Rope Extension", "Bench Dips"], "last": "last (Aug 03): 30 \u2014 15,15,15 @1,1,1", "cue": "Pin the elbows, split the rope at the bottom.", "wk": [35, 35, 40, 40, 45, 20], "maxKey": null, "pct": null}]}, {"code": "B", "title": "Pull - Heavy", "exercises": [{"name": "Cable Rows", "sets": 4, "reps": "8", "load": "150", "loadNum": 150.0, "rir": "2, last set 1", "note": "Pause a beat at the squeeze.", "perHand": false, "barbell": false, "deload": 90, "rest": "1:30", "warmup": "", "subs": ["Single-Arm DB Row", "Machine Row", "Barbell Row"], "last": "last (Aug 04): 145 \u2014 8,8,8,8 @4,3,2,1", "cue": "Chest tall, pull to the belt line, one-second squeeze.", "wk": [150, 150, 160, 160, 170, 90], "maxKey": null, "pct": null}, {"name": "Lat Pulldown", "sets": 4, "reps": "8", "load": "140", "loadNum": 140.0, "rir": "2, last set 1", "note": "", "perHand": false, "barbell": false, "deload": 85, "rest": "1:30", "warmup": "", "subs": ["Pull-Ups", "Neutral-Grip Pulldown", "Single-Arm Pulldown"], "last": "last (Aug 04): 130 \u2014 8,8,8,8 @3,2,1,0", "cue": "Elbows to the ribs, chest to the bar - no lean-back rowing.", "wk": [140, 140, 150, 150, 160, 85], "maxKey": null, "pct": null}, {"name": "Straight-Arm Pulldown", "sets": 2, "reps": "12", "load": "70", "loadNum": 70.0, "rir": "1", "note": "", "perHand": false, "barbell": false, "deload": 45, "rest": "1:30", "warmup": "", "subs": ["DB Pullover", "Rope Straight-Arm Pulldown", "Cable Pullover"], "last": "last (Aug 04): 65 \u2014 12,12 @2,0", "cue": "Arms long, push the bar down with your armpits.", "wk": [70, 70, 75, 75, 80, 45], "maxKey": null, "pct": null}, {"name": "Straight Bar Curl", "sets": 3, "reps": "8-10", "load": "60", "loadNum": 60.0, "rir": "2, last set 1", "note": "Fixed bars in 10s, no 55. Double progression: ride reps 8->10 at 60, then jump to 70.", "perHand": false, "barbell": false, "deload": 40, "rest": "1:30", "warmup": "", "subs": ["EZ-Bar Curl", "DB Curl", "Cable Curl"], "last": "last (Aug 04): 60 \u2014 10,10,10 @2,0,0", "cue": "Elbows welded to your sides - if they drift forward, the set is over.", "wk": [60, 70, 70, 70, 80, 40], "maxKey": null, "pct": null}, {"name": "Hammer Curls", "sets": 3, "reps": "10", "load": "30", "loadNum": 30.0, "rir": "1", "note": "35 broke form when pre-fatigued; start 30.", "perHand": true, "barbell": false, "deload": 25, "rest": "1:30", "warmup": "", "subs": ["Rope Hammer Curl", "Cross-Body Hammer Curl", "DB Reverse Curl"], "last": "last (Aug 04): 30 \u2014 10,10,10 @1,0,0", "cue": "Squeeze the handles hard; slow on the way down.", "wk": [30, 30, 35, 35, 40, 25], "maxKey": null, "pct": null}, {"name": "Incline DB Curl", "sets": 2, "reps": "10-12", "load": "20", "loadNum": 20.0, "rir": "1", "note": "Replaces preacher - trains the biceps at full stretch (elbow behind the torso), works identically at both your gyms, and kills the PF-machine anchor problem. Start 20s.", "perHand": false, "barbell": false, "deload": 10, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Bench at 45-60, arms hanging behind you - curl without the elbows drifting forward.", "wk": null, "maxKey": null, "pct": null}, {"name": "Face Pulls", "sets": 4, "reps": "15-20", "load": "30", "loadNum": 30.0, "rir": "1", "note": "Coverage fix - rear delts had zero direct work while you press four times a week. Shoulder insurance for a 355 bench. Rest 1:00, keep it quick.", "perHand": false, "barbell": false, "deload": 20, "rest": "1:00", "warmup": "", "subs": [], "last": "", "cue": "Pull the rope to your eyebrows, elbows high, thumbs pointing behind you at the finish.", "wk": null, "maxKey": null, "pct": null}]}, {"code": "C", "title": "Legs - Squat Priority", "exercises": [{"name": "Back Squat", "sets": 4, "reps": "5", "load": "255", "loadNum": 255.0, "rir": "2, last set 1", "note": "81% of 315. All four sets at 255 - do not climb.", "perHand": false, "barbell": true, "deload": 150, "rest": "3:00", "warmup": "bar x10, 135 x5, 185 x3, 225 x1", "subs": ["Front Squat", "Hack Squat", "Goblet Squat"], "last": "last (Jul 29): 225 \u2014 6 @0", "cue": "Big air, brace like a punch is coming, knees out - depth before load.", "wk": [255, 265, 275, 275, 285, 150], "maxKey": "squat", "pct": [0.80952, 0.84127, 0.87302, 0.87302, 0.90476, 0.47619]}, {"name": "Leg Press", "sets": 3, "reps": "12", "load": "200", "loadNum": 200.0, "rir": "2", "note": "Extra quad volume for the lagging lift. Log your starting weight. Starting anchor - dial to RIR 2 first session; your report locks the real number. Planned ramp shifts once your first report locks the real number.", "perHand": false, "barbell": false, "deload": 115, "rest": "2:00", "warmup": "", "subs": ["Hack Squat", "Bulgarian Split Squat", "Goblet Squat"], "last": "", "cue": "Whole foot pressing, knees track the toes, never slam lockout.", "wk": [200, 210, 220, 220, 230, 115], "maxKey": null, "pct": null}, {"name": "Romanian Deadlift", "sets": 3, "reps": "8", "load": "215", "loadNum": 215.0, "rir": "2", "note": "", "perHand": false, "barbell": true, "deload": 120, "rest": "3:00", "warmup": "", "subs": ["DB Romanian Deadlift", "Good Morning", "Back Extension"], "last": "last (Jul 29): 195 \u2014 8", "cue": "Hips back until the hamstrings scream, bar drags the thighs.", "wk": [215, 225, 235, 235, 245, 120], "maxKey": null, "pct": null}, {"name": "Walking Lunges", "sets": 3, "reps": "10 per leg", "load": "40", "loadNum": 40.0, "rir": "1", "note": "", "perHand": true, "barbell": false, "deload": 20, "rest": "1:30", "warmup": "", "subs": ["Bulgarian Split Squat", "Reverse Lunges", "Step-Ups"], "last": "last (Jul 29): 35 \u2014 10,10,10", "cue": "Long step, back knee straight down, drive through the front heel.", "wk": [40, 40, 45, 45, 50, 20], "maxKey": null, "pct": null}, {"name": "Seated Leg Curl", "sets": 3, "reps": "12", "load": "70", "loadNum": 70.0, "rir": "1", "note": "Replaces hip thrust - glutes already get squat, leg press, RDL and lunges on this day, while hamstrings had only one direct slot all week. Seated for the lengthened position. Dial to RIR 1.", "perHand": false, "barbell": false, "deload": 40, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Toes flexed, not pointed - squeeze hard at the top, control the return.", "wk": null, "maxKey": null, "pct": null}, {"name": "Standing Calf Raise", "sets": 5, "reps": "15", "load": "100", "loadNum": 100.0, "rir": "1", "note": "Starting anchor - dial to RIR 2 first session; your report locks the real number. Planned ramp shifts once your first report locks the real number.", "perHand": false, "barbell": false, "deload": 60, "rest": "1:30", "warmup": "", "subs": ["Seated Calf Raise", "Leg-Press Calf Press", "Single-Leg DB Calf Raise"], "last": "", "cue": "Dead pause at the bottom stretch; no bouncing the tendon.", "wk": [100, 100, 110, 110, 120, 60], "maxKey": null, "pct": null}, {"name": "Hanging Leg Raises", "sets": 3, "reps": "10-15", "load": "bodyweight", "loadNum": null, "rir": "1", "note": "", "perHand": false, "barbell": false, "deload": null, "rest": "1:30", "warmup": "", "subs": ["Captains Chair Leg Raise", "Lying Leg Raises", "Cable Crunch"], "last": "", "cue": "Curl the pelvis up - it is not a leg swing.", "wk": null, "maxKey": null, "pct": null}]}, {"code": "D", "title": "Push - Volume", "exercises": [{"name": "Bench Press", "sets": 4, "reps": "10", "load": "215", "loadNum": 215.0, "rir": "2, last set 1", "note": "72% of 300", "perHand": false, "barbell": true, "deload": 120, "rest": "3:00", "warmup": "bar x10, 135 x5, 185 x3, 215 x1", "subs": ["DB Bench Press", "Machine Chest Press", "Smith Bench Press"], "last": "last (Aug 03): 235 \u2014 5,5,5,5 @2,2,2,1", "cue": "Leg drive before the bar moves - squeeze the floor away.", "wk": [215, 215, 225, 225, 235, 120], "maxKey": "bench", "pct": [0.71667, 0.71667, 0.75, 0.75, 0.78333, 0.4]}, {"name": "Overhead Press", "sets": 3, "reps": "10", "load": "95", "loadNum": 95.0, "rir": "2", "note": "", "perHand": false, "barbell": true, "deload": 60, "rest": "3:00", "warmup": "bar x10, 75 x5, 95 x3", "subs": ["Seated DB Shoulder Press", "Machine Shoulder Press", "Arnold Press"], "last": "last (Aug 03): 105 \u2014 8,8,8 @2,2,2", "cue": "Glutes locked, ribs down - press around your face, finish behind your ears.", "wk": [95, 105, 105, 105, 115, 60], "maxKey": "ohp", "pct": [0.63333, 0.7, 0.7, 0.7, 0.76667, 0.4]}, {"name": "Incline DB Press", "sets": 3, "reps": "10-12", "load": "60", "loadNum": 60.0, "rir": "1", "note": "", "perHand": true, "barbell": false, "deload": 40, "rest": "2:00", "warmup": "", "subs": ["Incline Barbell Press", "Machine Incline Press", "Weighted Dips"], "last": "last (Aug 03): 60 \u2014 10,10,9 @2,2,1", "cue": "Elbows at 45, drive the bells together at the top without clanking.", "wk": [60, 60, 65, 65, 70, 40], "maxKey": null, "pct": null}, {"name": "Lateral Raises", "sets": 4, "reps": "15", "load": "15", "loadNum": 15.0, "rir": "1", "note": "", "perHand": true, "barbell": false, "deload": 10, "rest": "1:30", "warmup": "", "subs": ["Cable Lateral Raise", "Machine Lateral Raise", "Plate Lateral Raise"], "last": "last (Aug 03): 15 \u2014 15,15,15 @1,1,1", "cue": "Lead with the elbows, pour the pitcher - nothing above shoulder height.", "wk": [15, 20, 20, 20, 25, 10], "maxKey": null, "pct": null}, {"name": "Overhead Rope Extension", "sets": 3, "reps": "12-15", "load": "25", "loadNum": 25.0, "rir": "1", "note": "Upgraded from pushdowns on this day - overhead position grows the long head substantially more (Maeo 2023). Start 25 and dial to RIR 1; it will feel much lighter than pushdowns.", "perHand": false, "barbell": false, "deload": 15, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Elbows by your ears, full stretch behind the head, squeeze to lockout.", "wk": null, "maxKey": null, "pct": null}]}, {"code": "E", "title": "Pull - Volume", "exercises": [{"name": "Lat Pulldown", "sets": 4, "reps": "12", "load": "110", "loadNum": 110.0, "rir": "2, last set 1", "note": "", "perHand": false, "barbell": false, "deload": 65, "rest": "1:30", "warmup": "", "subs": ["Pull-Ups", "Neutral-Grip Pulldown", "Single-Arm Pulldown"], "last": "last (Aug 04): 130 \u2014 8,8,8,8 @3,2,1,0", "cue": "Elbows to the ribs, chest to the bar - no lean-back rowing.", "wk": [110, 110, 120, 120, 130, 65], "maxKey": null, "pct": null}, {"name": "Cable Rows", "sets": 4, "reps": "12", "load": "110", "loadNum": 110.0, "rir": "2, last set 1", "note": "", "perHand": false, "barbell": false, "deload": 65, "rest": "1:30", "warmup": "", "subs": ["Single-Arm DB Row", "Machine Row", "Barbell Row"], "last": "last (Aug 04): 145 \u2014 8,8,8,8 @4,3,2,1", "cue": "Chest tall, pull to the belt line, one-second squeeze.", "wk": [110, 110, 120, 120, 130, 65], "maxKey": null, "pct": null}, {"name": "Straight-Arm Pulldown", "sets": 2, "reps": "12-15", "load": "65", "loadNum": 65.0, "rir": "1", "note": "Fixed from 57.5 - stacks move in 5s.", "perHand": false, "barbell": false, "deload": 40, "rest": "1:30", "warmup": "", "subs": ["DB Pullover", "Rope Straight-Arm Pulldown", "Cable Pullover"], "last": "last (Aug 04): 65 \u2014 12,12 @2,0", "cue": "Arms long, push the bar down with your armpits.", "wk": [65, 65, 70, 70, 75, 40], "maxKey": null, "pct": null}, {"name": "Straight Bar Curl", "sets": 3, "reps": "12", "load": "50", "loadNum": 50.0, "rir": "1", "note": "", "perHand": false, "barbell": false, "deload": 35, "rest": "1:30", "warmup": "", "subs": ["EZ-Bar Curl", "DB Curl", "Cable Curl"], "last": "last (Aug 04): 60 \u2014 10,10,10 @2,0,0", "cue": "Elbows welded to your sides - if they drift forward, the set is over.", "wk": [50, 60, 60, 60, 70, 35], "maxKey": null, "pct": null}, {"name": "Hammer Curls", "sets": 3, "reps": "12", "load": "30", "loadNum": 30.0, "rir": "1", "note": "", "perHand": true, "barbell": false, "deload": 25, "rest": "1:30", "warmup": "", "subs": ["Rope Hammer Curl", "Cross-Body Hammer Curl", "DB Reverse Curl"], "last": "last (Aug 04): 30 \u2014 10,10,10 @1,0,0", "cue": "Squeeze the handles hard; slow on the way down.", "wk": [30, 30, 35, 35, 40, 25], "maxKey": null, "pct": null}, {"name": "Incline DB Curl", "sets": 2, "reps": "12", "load": "15", "loadNum": 15.0, "rir": "1", "note": "Volume-day partner to Day B - lengthened-position biceps work. Start 15s, chase the stretch not the weight.", "perHand": false, "barbell": false, "deload": 10, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Bench at 45-60, arms hanging behind you - curl without the elbows drifting forward.", "wk": null, "maxKey": null, "pct": null}, {"name": "Face Pulls", "sets": 4, "reps": "15-20", "load": "25", "loadNum": 25.0, "rir": "1", "note": "Coverage fix - rear delts had zero direct work while you press four times a week. Shoulder insurance for a 355 bench. Rest 1:00, keep it quick.", "perHand": false, "barbell": false, "deload": 15, "rest": "1:00", "warmup": "", "subs": [], "last": "", "cue": "Pull the rope to your eyebrows, elbows high, thumbs pointing behind you at the finish.", "wk": null, "maxKey": null, "pct": null}]}, {"code": "F", "title": "Legs - Deadlift Focus", "exercises": [{"name": "Conventional Deadlift", "sets": 3, "reps": "6", "load": "255", "loadNum": 255.0, "rir": "3-4", "note": "Opens where last block left off: 255, then 275 / 285 / 285 / 295. Same rule - deliberately controlled.", "perHand": false, "barbell": true, "deload": 140, "rest": "3:00", "warmup": "135 x5, 185 x3, 215 x1", "subs": ["Trap Bar Deadlift", "Rack Pull", "DB Romanian Deadlift"], "last": "", "cue": "Wedge in, pull the slack out, push the floor away.", "wk": [255, 275, 285, 285, 295, 140], "maxKey": "dead", "pct": [0.70833, 0.76389, 0.79167, 0.79167, 0.81944, 0.38889]}, {"name": "Back Squat", "sets": 3, "reps": "10", "load": "225", "loadNum": 225.0, "rir": "2", "note": "71% of 315. Second squat exposure - skill practice for the weak lift.", "perHand": false, "barbell": true, "deload": 130, "rest": "3:00", "warmup": "bar x10, 135 x5, 185 x3, 225 x1", "subs": ["Front Squat", "Hack Squat", "Goblet Squat"], "last": "last (Jul 29): 225 \u2014 6 @0", "cue": "Big air, brace like a punch is coming, knees out - depth before load.", "wk": [225, 225, 235, 235, 245, 130], "maxKey": "squat", "pct": [0.71429, 0.71429, 0.74603, 0.74603, 0.77778, 0.4127]}, {"name": "Seated Leg Curl", "sets": 3, "reps": "12", "load": "70", "loadNum": 70.0, "rir": "1", "note": "Seated beats lying for hamstring growth - hip flexed puts the hamstrings at length (Maeo 2021, +14 vs +9 percent). 70 is a guess anchor - dial to RIR 1 first session.", "perHand": false, "barbell": false, "deload": 40, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Toes flexed, not pointed - squeeze hard at the top, control the return.", "wk": null, "maxKey": null, "pct": null}, {"name": "Standing Calf Raise", "sets": 5, "reps": "15", "load": "100", "loadNum": 100.0, "rir": "1", "note": "Starting anchor - dial to RIR 2 first session; your report locks the real number. Planned ramp shifts once your first report locks the real number.", "perHand": false, "barbell": false, "deload": 60, "rest": "1:30", "warmup": "", "subs": ["Seated Calf Raise", "Leg-Press Calf Press", "Single-Leg DB Calf Raise"], "last": "", "cue": "Dead pause at the bottom stretch; no bouncing the tendon.", "wk": [100, 100, 110, 110, 120, 60], "maxKey": null, "pct": null}, {"name": "Hanging Leg Raises", "sets": 3, "reps": "15", "load": "bodyweight", "loadNum": null, "rir": "1", "note": "", "perHand": false, "barbell": false, "deload": null, "rest": "1:30", "warmup": "", "subs": ["Captains Chair Leg Raise", "Lying Leg Raises", "Cable Crunch"], "last": "", "cue": "Curl the pelvis up - it is not a leg swing.", "wk": null, "maxKey": null, "pct": null}, {"name": "Plank", "sets": 3, "reps": "max hold", "load": "bodyweight", "loadNum": null, "rir": "", "note": "You are tested on a max plank every six months and were training it zero times a week. Log the hold time in reps as seconds if you want it tracked.", "perHand": false, "barbell": false, "deload": null, "rest": "1:30", "warmup": "", "subs": [], "last": "", "cue": "Squeeze glutes, ribs down, one straight line - the shake is the work.", "wk": null, "maxKey": null, "pct": null}]}], "builtOn": "2026-08-19", "v": 18};
 const SKEY = 'nova-card-v2', LOGP='nova-sc-log:';
-const BUILD = 'v191';
+const BUILD = 'v199';
 // The card's TRUE home, baked at build time. Every share surface (both QRs, the share link,
 // the social payload) uses THIS, never the runtime address - a card opened from a download,
 // a preview, the hub, or the wrong path would otherwise immortalise that wrong address in a
@@ -11257,6 +11386,12 @@ function exState(i, ex){
     S.data[exKey(i)] = { sets:Array.from({length:n},()=>({st:'pend',reps:null,rir:null})), w:null, feel:null, open:-1, wopen:false, sub:null };
   }
   const st=S.data[exKey(i)];
+  // FOUND BY THE STATE FUZZER 2026-09-02: a set list that is not an array, or a null entry
+  // inside one, threw on every render - the day screen would never draw again. Heal the
+  // shape here, the single place set state is read, rather than guard every reader.
+  if(!Array.isArray(st.sets)) st.sets=[];
+  if(st.sets.some(function(x){ return !x || typeof x!=='object'; }))
+    st.sets=st.sets.filter(function(x){ return x && typeof x==='object'; });
   while(st.sets.length<n) st.sets.push({st:'pend',reps:null,rir:null});
   // the session-length target can grow a day and later be turned off - untouched trailing
   // sets leave with it, logged sets never do
@@ -12157,9 +12292,29 @@ function readStamp(){
   }catch(e){}
   return null;
 }
+// FOUND BY THE ORPHAN-CONTROL SCAN 2026-09-02: the stale-copy banner rendered two choices
+// and NEITHER was bound. Worse, once the warning trips save() returns without writing - on
+// every call - so everything logged after it was silently dropped until a reload, and the
+// only two exits on screen did nothing. Realistic trigger: the card open in Safari AND as the
+// home-screen app at once, which is how everyone installs it.
+// "Keep this one": adopt the other copy's stamp as seen, then write ours over it - exactly
+// what the banner promised ("the other loses what it did since").
+function staleKeep(){
+  try{ var st=readStamp(); if(st && st.t) LAST_SYNC=st.t; }catch(e){}
+  STALE_WARNED=false;
+  save(); render();
+  try{ alertToast('Kept this copy \u2014 the other one is overwritten'); }catch(e){}
+}
+// "Load the other copy": the other copy is what is in storage. Reloading is the honest
+// implementation - THIS copy's unsaved work is the cost, and the banner said so.
+function hardReload(){ location.reload(); }   // one seam, so the reload exits can be verified
+function staleUse(){
+  STALE_WARNED=false;
+  try{ hardReload(); }catch(e){ try{ alertToast('Could not reload \u2014 close and reopen the card'); }catch(e2){} }
+}
 function staleBannerHTML(){
   if(!STALE_WARNED) return '';
-  return '<div class="stale-bar" role="alert"><b>This card is open somewhere else.</b>'
+  return '<div class="stale-bar lockfree" role="alert"><b>This card is open somewhere else.</b>'
     +'That copy saved after this one, so the two have drifted apart. They will not merge \u2014 '
     +'whichever you keep, the other loses what it did since.'
     +'<span class="vol-pick" data-staleuse="1">Load the other copy</span>'
@@ -12577,6 +12732,20 @@ async function load(){ const DEF=JSON.parse(JSON.stringify(S));
   if(!S.profile) S.profile={hFt:5,hIn:9,wt:200,goal:'block1'};
   if(S.ready===undefined) S.ready=null;
   if(!S.e1rm) S.e1rm={};
+  // FOUND BY THE STATE FUZZER 2026-09-02: readers like weekSets walk EVERY stored exercise
+  // state directly, so a set list that is not an array, or a null entry inside one, threw on
+  // every render for good - exState's own healing never reaches days that are not on screen.
+  // One pass at boot puts every entry into shape; anything unrecognisable is dropped.
+  try{
+    if(!S.data || typeof S.data!=='object' || Array.isArray(S.data)) S.data={};
+    Object.keys(S.data).forEach(function(k){
+      var st=S.data[k];
+      if(!st || typeof st!=='object' || Array.isArray(st)){ delete S.data[k]; return; }
+      if(!Array.isArray(st.sets)) st.sets=[];
+      if(st.sets.some(function(x){ return !x || typeof x!=='object'; }))
+        st.sets=st.sets.filter(function(x){ return x && typeof x==='object'; });
+    });
+  }catch(e){}
   // pain flags left with the feature (2026-09-01) - stored answers go with the question
   try{ if(S.painLog!==undefined) delete S.painLog;
        Object.keys(S.data||{}).forEach(function(k){ var st=S.data[k]; if(st&&st.pain!==undefined) delete st.pain; }); }catch(e){}
@@ -12734,9 +12903,10 @@ function renderInner(){
     h+=calHTML();
     h+='<div class="rules">Green days are sessions you actually logged \u2014 the letters are which day you ran. '
       +'Solid amber outlines are your scheduled training days ahead; a red number is a scheduled day that went untrained. '
-      +'Dashed amber marks the deload week, \u2605 is block end, and small numbers are logged bodyweight. '
+      +'Dashed amber marks a banked deload-week session, and small numbers are logged bodyweight. '
       +'Dots are your own entries \u2014 grey notes, amber appointments, red fitness tests. Tap any day to open it or add to it.</div>';
     h+=calBlockHTML();
+    try{ h+=galleryHTML(); }catch(e){}
     app.innerHTML=h; wire(); try{ settingsSync(); }catch(e){} return;
   }
   if(S.day==='MAX'){
@@ -13560,6 +13730,10 @@ function wire(){
   document.querySelectorAll('[data-discshow]').forEach(b=>b.onclick=()=>{ bootDisc(true); });
   document.querySelectorAll('[data-gocal]').forEach(b=>b.onclick=()=>{ S.day='CAL'; save(); render(); });
   document.querySelectorAll('[data-mailopen]').forEach(b=>b.onclick=()=>{ mailShow(); });
+  document.querySelectorAll('[data-stalekeep]').forEach(b=>b.onclick=()=>{ staleKeep(); });
+  document.querySelectorAll('#app [data-galopen]').forEach(b=>b.onclick=()=>{ galleryOpen(b.dataset.galopen); });
+  document.querySelectorAll('#app [data-galshare]').forEach(b=>b.onclick=()=>{ galleryShare(b.dataset.galshare); });
+  document.querySelectorAll('[data-staleuse]').forEach(b=>b.onclick=()=>{ staleUse(); });
   document.querySelectorAll('[data-cntype]').forEach(b=>b.onclick=()=>{ S.cnType=b.dataset.cntype; save(); render(); });
   document.querySelectorAll('[data-cncd]').forEach(b=>b.onclick=()=>{ S.cnCd=(S.cnCd===false); save(); render(); });
   document.querySelectorAll('[data-cnadd]').forEach(b=>b.onclick=()=>{
@@ -14540,7 +14714,9 @@ function calIndex(){
   (S.weightLog||[]).forEach(x=>{ if(ix[x.d]) ix[x.d].bw=x.w; else ix[x.d]={days:[],bw:x.w}; });
   return ix;
 }
-function calWeekOf(iso){
+// RETIRED 2026-09-02 - a pure calendar projection from PLAN.start. Weeks are counted in
+// banked sessions; a date only has a week if a banked session on it says so.
+function calWeekOf_RETIRED(iso){
   const s=new Date(PLAN.start+'T12:00:00'), n=new Date(iso+'T12:00:00');
   if(n<s) return null;
   const aw=Math.floor((n-s)/(7*86400000))+1;
@@ -14565,16 +14741,18 @@ function calHTML(){
   for(let i=0;i<lead;i++) h+='<div></div>';
   for(let d=1; d<=dim; d++){
     const iso=Y+'-'+String(M).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const e=ix[iso], wk=calWeekOf(iso);
+    const e=ix[iso];
     const isToday=(iso===today);
-    const deload=wk && wk.week===PLAN.weeks;
+    // a deload mark is a FACT: a banked session whose key says the final week - never a
+    // calendar projection of where week 6 "should" fall
+    const deload=!!(e && e.tag && new RegExp('^W'+PLAN.weeks+'B').test(e.tag));
     let bg='transparent', fg='var(--faint)', bd='1px solid var(--line)';
     if(e && e.days.length){ bg='var(--green)'; fg='#0d1108'; bd='1px solid var(--green)'; }
     else if(deload){ bg='transparent'; fg='var(--amber)'; bd='1px dashed var(--amber)'; }
     // pain outlines left with the pain feature (c131); scheduled/missed arrived with the
     // block-calendar work (c139) - marks only exist where training days are actually known
     var schedHere=false; try{ schedHere=calTrainDays().indexOf(new Date(iso+'T12:00:00').getDay())>-1
-      && iso>=PLAN.start && calEndIso() && iso<=calEndIso(); }catch(e2){}
+      && iso>=PLAN.start; }catch(e2){}
     if(schedHere && !(e&&e.days.length)){
       if(iso>today) bd='1px solid var(--amber)';
       else if(iso<today) fg='var(--red)';
@@ -14582,7 +14760,7 @@ function calHTML(){
     h+='<div data-calday="'+iso+'" style="min-height:44px;border:'+bd+';border-radius:8px;background:'+bg
       +';padding:3px 2px;text-align:center;cursor:pointer;'+(isToday?'box-shadow:0 0 0 2px var(--amber);':'')+'">'
       +'<div class="mono" style="font-size:12px;font-weight:700;color:'+fg+'">'+d
-      +((iso===(function(){try{return calEndIso();}catch(e3){return null;}})())? ' <span style="font-size:8px;color:var(--amber)">\u2605</span>' : '')+'</div>'
+      +'</div>'
       +(e&&e.days.length? '<div style="font-size:10px;font-weight:800;color:'+fg+'">'+e.days.join('')+'</div>':'')
       +(e&&e.bw!=null? '<div style="font-size:8px;color:'+(e.days.length?fg:'var(--faint)')+'">'+Math.round(isKg()? e.bw*0.45359237 : e.bw)+'</div>':'')
       +(function(){ var ns=(calNotes()[iso]||[]); if(!ns.length) return '';
@@ -14596,7 +14774,7 @@ function calHTML(){
    +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;border:1px dashed var(--amber);vertical-align:-1px"></span> deload week</span>'
    +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid var(--amber);vertical-align:-1px"></span> scheduled</span>'
    +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;color:var(--red);text-align:center;font-size:9px;line-height:10px;font-weight:800;vertical-align:-1px">7</span> missed</span>'
-   +'<span><span style="color:var(--amber);font-size:10px">\u2605</span> block end</span>'
+
    +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;box-shadow:0 0 0 2px var(--amber);vertical-align:-1px"></span> today</span>'
    +'</div>';
   // month summary
@@ -14611,7 +14789,10 @@ function calHTML(){
   return h;
 }
 function calDetailHTML(iso){
-  const ix=calIndex(), e=ix[iso], wk=calWeekOf(iso);
+  const ix=calIndex(), e=ix[iso];
+  // the day's block/week label comes from the banked session's own key (W#B#) - a fact -
+  // never from a calendar projection of where the week "should" fall (his ruling 2026-09-02)
+  let wk=null; try{ const m=e && e.tag && e.tag.match(/^W(\d+)B(\d+)$/); if(m) wk={week:+m[1], cycle:+m[2]}; }catch(x){}
   let h='<div class="block" style="margin-top:10px;border-color:var(--amber)">'
    +'<div style="font-weight:800;color:var(--amber)">'+iso+'</div>'
    +'<div class="sleeve-label">'+(wk? 'Block '+wk.cycle+' \u00b7 week '+wk.week+' of '+PLAN.weeks+(wk.week===PLAN.weeks?' \u00b7 DELOAD':'') : 'before this block started')+'</div>';
